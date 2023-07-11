@@ -2,6 +2,8 @@ class DeviceProfileModel {
   String? name;
   String? email;
   String? phone;
+  String? fontSize;
+  String? color;
   late String latitude;
   late String longitude;
 
@@ -9,6 +11,8 @@ class DeviceProfileModel {
     this.name,
     this.email,
     this.phone,
+    this.fontSize,
+    this.color,
     required this.latitude,
     required this.longitude,
   });
@@ -17,6 +21,8 @@ class DeviceProfileModel {
     name = json['name'] != null ? json['name'] : '';
     email = json['email'] != null ? json['email'] : '';
     phone = json['phone'] != null ? json['phone'] : '';
+    fontSize = json['fontSize'] != null ? json['fontSize'] : '';
+    color = json['color'] != null ? json['color'] : '';
     latitude = json['latitude'];
     longitude = json['longitude'];
   }
@@ -26,6 +32,8 @@ class DeviceProfileModel {
       'name': name ?? '',
       'email': email ?? '',
       'phone': phone ?? '',
+      'fontSize': fontSize ?? '',
+      'color': color ?? '',
       'latitude': latitude,
       'longitude': longitude,
     };
