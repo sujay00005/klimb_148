@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:klimb_148/util/constants/color-constant.dart';
 
 import '../model/device-profile-model.dart';
-import '../util/constants/design-constants.dart';
 import '../util/db-helper.dart';
 import 'add-location.dart';
 
@@ -80,7 +79,14 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 10,
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return AddLocation(allProfiles: profiles);
+            return AddLocation(
+              allProfiles: profiles,
+              onAddingData: (List<DeviceProfileModel> newProfiles) {
+                setState(() {
+                  profiles = newProfiles;
+                });
+              },
+            );
           }));
         },
         child: const Icon(Icons.add, size: 32),

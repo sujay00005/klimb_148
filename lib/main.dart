@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:klimb_148/provider/update-profiles.dart';
 import 'package:klimb_148/view/add-location.dart';
 import 'package:klimb_148/view/profile-page.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UpdatedProfiles()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

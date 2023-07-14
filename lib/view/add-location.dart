@@ -3,22 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:klimb_148/util/constants/design-constants.dart';
 import 'package:klimb_148/util/db-helper.dart';
-import 'package:klimb_148/view/profile-page.dart';
 
 import '../model/device-profile-model.dart';
 import '../util/constants/color-constant.dart';
 
 class AddLocation extends StatefulWidget {
   // final bool newUser;
-  final String? longitude;
-  final String? latitude;
+  // final String? longitude;
+  // final String? latitude;
   final List<DeviceProfileModel> allProfiles;
+  final Function(List<DeviceProfileModel>) onAddingData;
   const AddLocation({
     super.key,
     // required this.newUser,
+    required this.onAddingData,
     required this.allProfiles,
-    this.longitude,
-    this.latitude,
+    // this.longitude,
+    // this.latitude,
     //false,
   });
 
@@ -40,41 +41,36 @@ class _AddLocationState extends State<AddLocation> {
   TextEditingController fontSizeController = TextEditingController();
   Color pickerColor = const Color(0xff770dac);
 
-  void _submit() {
+  bool _submit() {
     final isValid = _formKey.currentState?.validate();
     if (isValid == null || !isValid) {
-      return;
+      return false;
     }
     _formKey.currentState?.save();
+    return true;
   }
 
   validate() {
     validateMode = AutovalidateMode.onUserInteraction;
   }
 
-  // Future<void> fetchDeviceProfiles() async {
-  //   final dataList = await DBHelper.getAllData('profiles');
-  //   dataList
-  //       .map((item) => DeviceProfileModel(
-  //           name: item['name'],
-  //           email: item['email'],
-  //           phone: item['phone'],
-  //           fontSize: item['fontSize'],
-  //           color: item['color'],
-  //           longitude: item['longitude'],
-  //           latitude: item['latitude']))
-  //       .toList();
-  //
-  //   print("🎃🎃🎃");
-  //   print(dataList[0]);
-  // }
+  Future<List<DeviceProfileModel>> fetchDeviceProfiles() async {
+    final data = await DBHelper.getAllData('profiles');
+    final List<DeviceProfileModel> dataList = data.map((item) {
+      return DeviceProfileModel(
+          name: item['name'],
+          email: item['email'],
+          phone: item['phone'],
+          fontSize: item['fontSize'],
+          color: item['color'],
+          longitude: item['longitude'],
+          latitude: item['latitude']);
+    }).toList();
+    return dataList;
+  }
 
   @override
   void initState() {
-    if (widget.longitude != null && widget.latitude != null) {
-      longitudeController.text = widget.longitude!;
-      latitudeController.text = widget.latitude!;
-    }
     super.initState();
   }
 
@@ -101,7 +97,6 @@ class _AddLocationState extends State<AddLocation> {
             key: _formKey,
             child: SingleChildScrollView(
               child: Column(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   const SizedBox(height: 30),
                   TextFormField(
@@ -153,7 +148,6 @@ class _AddLocationState extends State<AddLocation> {
                       TextFormField(
                         decoration: kTextFieldDecoration.copyWith(
                           label: const Text('Name'),
-                          //errorText: 'Enter valid email'
                         ),
                         controller: nameController,
                         validator: (value) {
@@ -167,7 +161,6 @@ class _AddLocationState extends State<AddLocation> {
                       TextFormField(
                         decoration: kTextFieldDecoration.copyWith(
                           label: const Text('Email'),
-                          //errorText: 'Enter valid email'
                         ),
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -181,6 +174,7 @@ class _AddLocationState extends State<AddLocation> {
                             }
                             return null;
                           }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 30),
@@ -203,13 +197,13 @@ class _AddLocationState extends State<AddLocation> {
                             }
                             return null;
                           }
+                          return null;
                         },
                       ),
                       const SizedBox(height: 30),
                       TextFormField(
                         decoration: kTextFieldDecoration.copyWith(
                           label: const Text('Font Size'),
-                          //errorText: 'Enter valid email'
                         ),
                         controller: fontSizeController,
                         keyboardType: TextInputType.number,
@@ -230,7 +224,6 @@ class _AddLocationState extends State<AddLocation> {
                             'Pick Theme color',
                             style: TextStyle(
                                 fontSize: 18,
-                                // fontWeight: FontWeight.bold,
                                 color: ColorConstant.primaryGreen),
                           ),
                           const SizedBox(width: 40),
@@ -248,23 +241,11 @@ class _AddLocationState extends State<AddLocation> {
                             border:
                                 Border.all(color: ColorConstant.primaryGreen),
                             borderRadius:
-                                const BorderRadius.all(Radius.circular(18))
-                            //           BoxShape.all<RoundedRectangleBorder>(
-                            //             RoundedRectangleBorder(
-                            //                 borderRadius: BorderRadius.circular(18.0),
-                            //                 side: const BorderSide(
-                            //                   color: ColorConstant.primaryGreen,
-                            //                 )),
-                            //           ),
-                            ),
+                                const BorderRadius.all(Radius.circular(18))),
                         child: MaterialPicker(
                           pickerColor: pickerColor,
                           enableLabel: true, // only on portrait mode
                           onColorChanged: (Color color) {
-                            print("🎫🎫");
-                            print(Color(pickerColor.value).withOpacity(1));
-                            print(pickerColor.toString());
-                            // print(pickerColor);
                             setState(() => pickerColor = color);
                           },
                         ),
@@ -279,55 +260,105 @@ class _AddLocationState extends State<AddLocation> {
                       style: kButtonDecoration,
                       onPressed: () async {
                         validate();
-                        _submit();
+                        bool isValid = _submit();
 
-                        print("🧧🧧🧧🧧");
+                        // print("🧧🧧🧧🧧");
 
-                        bool flag = false;
-                        // DeviceProfileModel profile=
-                        widget.allProfiles.map((value) {
-                          if (value.latitude == latitudeController.text &&
-                              value.longitude == longitudeController.text) {
-                            setState(() {
-                              print("Came HERE ");
-                              flag = true;
-                              // return value;
-                            });
+                        if (isValid) {
+                          bool duplicateFlag = false;
+                          // DeviceProfileModel profile=
+                          for (var currProfile in widget.allProfiles) {
+                            // print("🧧🧧");
+                            if (currProfile.latitude ==
+                                    longitudeController.text &&
+                                currProfile.latitude ==
+                                    longitudeController.text) {
+                              setState(() {
+                                duplicateFlag = true;
+                              });
+                            }
                           }
-                        }) as DeviceProfileModel;
 
-                        if (flag) {
-                          await showDialog<String>(
-                            context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                              title: const Text('New Latitude & Longitude'),
-                              content: const Text('Add new device profile'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      newUser = true;
-                                    });
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('OK'),
+                          if (!duplicateFlag) {
+                            if (fontSizeController.text.isEmpty) {
+                              await showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: const Text('New Latitude & Longitude'),
+                                  content: const Text('Add new device profile'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          newUser = true;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          );
-                          Map<String, Object> data = {
-                            'name': nameController.text,
-                            'email': emailController.text,
-                            'phone': phoneController.text,
-                            'fontSize': fontSizeController.text,
-                            'color': pickerColor.value,
-                            'longitude': longitudeController.text,
-                            'latitude': latitudeController.text
-                          };
+                              );
+                            }
 
-                          DBHelper.insert('profiles', data);
-                          print("Saved");
-                        } else {}
+                            if (longitudeController.text.isNotEmpty &&
+                                latitudeController.text.isNotEmpty &&
+                                fontSizeController.text.isNotEmpty) {
+                              Map<String, Object> data = {
+                                'name': nameController.text,
+                                'email': emailController.text,
+                                'phone': phoneController.text,
+                                'fontSize': fontSizeController.text,
+                                'color': pickerColor.value,
+                                'longitude': longitudeController.text,
+                                'latitude': latitudeController.text
+                              };
+
+                              DBHelper.insert('profiles', data);
+                              // DeviceProfileModel profileData =
+                              //     DeviceProfileModel(
+                              //         name: nameController.text,
+                              //         email: emailController.text,
+                              //         phone: phoneController.text,
+                              //         fontSize: fontSizeController.text,
+                              //         color: pickerColor.value.toString(),
+                              //         longitude: longitudeController.text,
+                              //         latitude: latitudeController.text);
+                              // Provider.of<UpdatedProfiles>(context)
+                              //     .updateProfiles([profileData]);
+                              // print("Saved");
+                              // setState(() {
+                              //   newUser = false;
+                              // });
+
+                              List<DeviceProfileModel> newData =
+                                  await fetchDeviceProfiles();
+                              widget.onAddingData(newData);
+                              // print("☮☮ Popping 2nd one");
+                              Navigator.pop(context);
+                            }
+                          } else {
+                            await showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                title: const Text('Profile already exists'),
+                                content: const Text('Go back'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        newUser = false;
+                                      });
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        }
                       },
                       // },
                       child: const Text('Save',
