@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:klimb_148/provider/new_profiles.dart';
 import 'package:klimb_148/util/constants/design-constants.dart';
 import 'package:klimb_148/util/db-helper.dart';
+import 'package:klimb_148/view/profile-page.dart';
 
 import '../model/device-profile-model.dart';
 import '../util/constants/color-constant.dart';
 
 class AddLocation extends StatefulWidget {
-  // final bool newUser;
-  // final String? longitude;
-  // final String? latitude;
   final List<DeviceProfileModel> allProfiles;
-  final Function(List<DeviceProfileModel>) onAddingData;
   const AddLocation({
     super.key,
-    // required this.newUser,
-    required this.onAddingData,
     required this.allProfiles,
-    // this.longitude,
-    // this.latitude,
-    //false,
   });
 
   @override
@@ -92,7 +85,6 @@ class _AddLocationState extends State<AddLocation> {
         child: Container(
           padding: const EdgeInsets.all(15),
           margin: const EdgeInsets.all(15),
-          // color: ColorConstant.secondaryGreen,
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -181,7 +173,6 @@ class _AddLocationState extends State<AddLocation> {
                       TextFormField(
                         decoration: kTextFieldDecoration.copyWith(
                           label: const Text('Phone'),
-                          //errorText: 'Enter valid email'
                         ),
                         controller: phoneController,
                         keyboardType: TextInputType.number,
@@ -258,109 +249,9 @@ class _AddLocationState extends State<AddLocation> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: kButtonDecoration,
-                      onPressed: () async {
-                        validate();
-                        bool isValid = _submit();
-
-                        // print("🧧🧧🧧🧧");
-
-                        if (isValid) {
-                          bool duplicateFlag = false;
-                          // DeviceProfileModel profile=
-                          for (var currProfile in widget.allProfiles) {
-                            // print("🧧🧧");
-                            if (currProfile.latitude ==
-                                    longitudeController.text &&
-                                currProfile.latitude ==
-                                    longitudeController.text) {
-                              setState(() {
-                                duplicateFlag = true;
-                              });
-                            }
-                          }
-
-                          if (!duplicateFlag) {
-                            if (fontSizeController.text.isEmpty) {
-                              await showDialog<String>(
-                                context: context,
-                                builder: (BuildContext context) => AlertDialog(
-                                  title: const Text('New Latitude & Longitude'),
-                                  content: const Text('Add new device profile'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          newUser = true;
-                                        });
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            if (longitudeController.text.isNotEmpty &&
-                                latitudeController.text.isNotEmpty &&
-                                fontSizeController.text.isNotEmpty) {
-                              Map<String, Object> data = {
-                                'name': nameController.text,
-                                'email': emailController.text,
-                                'phone': phoneController.text,
-                                'fontSize': fontSizeController.text,
-                                'color': pickerColor.value,
-                                'longitude': longitudeController.text,
-                                'latitude': latitudeController.text
-                              };
-
-                              DBHelper.insert('profiles', data);
-                              // DeviceProfileModel profileData =
-                              //     DeviceProfileModel(
-                              //         name: nameController.text,
-                              //         email: emailController.text,
-                              //         phone: phoneController.text,
-                              //         fontSize: fontSizeController.text,
-                              //         color: pickerColor.value.toString(),
-                              //         longitude: longitudeController.text,
-                              //         latitude: latitudeController.text);
-                              // Provider.of<UpdatedProfiles>(context)
-                              //     .updateProfiles([profileData]);
-                              // print("Saved");
-                              // setState(() {
-                              //   newUser = false;
-                              // });
-
-                              List<DeviceProfileModel> newData =
-                                  await fetchDeviceProfiles();
-                              widget.onAddingData(newData);
-                              // print("☮☮ Popping 2nd one");
-                              Navigator.pop(context);
-                            }
-                          } else {
-                            await showDialog<String>(
-                              context: context,
-                              builder: (BuildContext context) => AlertDialog(
-                                title: const Text('Profile already exists'),
-                                content: const Text('Go back'),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        newUser = false;
-                                      });
-                                      Navigator.pop(context);
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        }
+                      onPressed: () {
+                        submitDeviceProfile();
                       },
-                      // },
                       child: const Text('Save',
                           style: TextStyle(color: Colors.white)),
                     ),
@@ -372,5 +263,87 @@ class _AddLocationState extends State<AddLocation> {
         ),
       ),
     );
+  }
+
+  submitDeviceProfile() async {
+    validate();
+    bool isValid = _submit();
+
+    if (isValid) {
+      bool duplicateFlag = false;
+      for (var currProfile in widget.allProfiles) {
+        if (currProfile.latitude == longitudeController.text &&
+            currProfile.latitude == longitudeController.text) {
+          setState(() {
+            duplicateFlag = true;
+          });
+        }
+      }
+
+      if (!duplicateFlag) {
+        if (fontSizeController.text.isEmpty) {
+          await showDialog<String>(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('New Latitude & Longitude'),
+              content: const Text('Add new device profile'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      newUser = true;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (longitudeController.text.isNotEmpty &&
+            latitudeController.text.isNotEmpty &&
+            fontSizeController.text.isNotEmpty) {
+          NewProfiles().addProfile(
+            DeviceProfileModel(
+              name: nameController.text,
+              email: emailController.text,
+              phone: phoneController.text,
+              fontSize: fontSizeController.text,
+              color: pickerColor.value.toString(),
+              longitude: longitudeController.text,
+              latitude: latitudeController.text,
+            ),
+          );
+
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => const ProfilePage(),
+              ),
+              (Route<dynamic> route) => false);
+        }
+      } else {
+        await showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('Profile already exists'),
+            content: const Text('Go back'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    newUser = false;
+                  });
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 }

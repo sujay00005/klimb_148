@@ -11,6 +11,11 @@ class DBHelper {
     }, version: 1);
   }
 
+  static Future<List<Map<String, dynamic>>> getAllData(String table) async {
+    final db = await DBHelper.database();
+    return db.query(table);
+  }
+
   static Future<void> insert(String table, Map<String, Object> data) async {
     final db = await DBHelper.database();
 
@@ -26,19 +31,9 @@ class DBHelper {
     );
   }
 
-  static Future<List<Map<String, dynamic>>> getAllData(String table) async {
-    final db = await DBHelper.database();
-    return db.query(table);
-  }
-
-  static Future getMatchingData(
-      String table, String latitude, String longitude) async {
-    final db = await DBHelper.database();
-    final dbData = await db.query(
-      table,
-      where: '$latitude $longitude',
-      whereArgs: [latitude, longitude],
-    );
-    if (dbData.isNotEmpty) return dbData;
-  }
+//   final dbData = await db.query(
+//     table,
+//     where: '$latitude $longitude',
+//     whereArgs: [latitude, longitude],
+//   );
 }
